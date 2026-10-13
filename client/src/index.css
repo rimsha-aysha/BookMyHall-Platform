@@ -102,6 +102,12 @@
   box-sizing: border-box;
 }
 
+/* The hidden attribute always wins over display rules (e.g. the global
+   input styles), so hidden controls such as file pickers stay hidden. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   background: var(--bg);

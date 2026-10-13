@@ -7,7 +7,7 @@ import ImageListEditor from "../../components/ImageListEditor.jsx";
 import Icon from "../../components/Icon.jsx";
 import { ErrorState } from "../../components/States.jsx";
 import { apiError } from "../../utils/format.js";
-import { DEFAULT_ACCENT, isHexColor, isReadableOnLightPage, textOn } from "../../utils/color.js";
+import { DEFAULT_ACCENT, isHexColor, readableAccent, textOn } from "../../utils/color.js";
 
 // Owner-only restaurant settings. One installation serves one restaurant, so
 // these are simply "the restaurant's" details — shown across the customer
@@ -140,8 +140,13 @@ const EventTypesEditor = ({ value, onChange }) => {
   );
 };
 
+const prefersDark = () => window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+
 const AccentColorField = ({ value, onChange, error }) => {
   const color = isHexColor(value) ? value : DEFAULT_ACCENT;
+  // Preview exactly what the site will use in the current colour scheme
+  // (useSiteBranding adjusts the colour where needed to stay readable).
+  const shown = readableAccent(color, prefersDark() ? "dark" : "light");
   return (
     <div>
       <label htmlFor="brandColor">Accent colour</label>
@@ -155,15 +160,16 @@ const AccentColorField = ({ value, onChange, error }) => {
         )}
       </div>
       <div className="color-preview">
-        <span className="color-preview-button" style={{ background: color, color: textOn(color) }}>
+        <span className="color-preview-button" style={{ background: shown, color: textOn(shown) }}>
           Book an event
         </span>
-        <span style={{ color }}>A link in this colour</span>
+        <span style={{ color: shown }}>A link in this colour</span>
       </div>
       <p className="field-help">Used for buttons, links and highlights on the customer site and staff pages.</p>
-      {!isReadableOnLightPage(color) && (
+      {shown.toLowerCase() !== color.toLowerCase() && (
         <p className="field-help">
-          This colour is quite light, so links and text in it will be shown slightly darker to stay readable.
+          To keep text readable, this colour is shown slightly {prefersDark() ? "lighter" : "darker"} in the current{" "}
+          {prefersDark() ? "dark" : "light"} theme (as previewed).
         </p>
       )}
       {error && (
@@ -208,6 +214,12 @@ const SettingsForm = ({ initial }) => {
       if (errors?.length) {
         setFieldErrors(Object.fromEntries(errors.map((x) => [fieldOf(x.field), x.message])));
         setFormError("Please correct the highlighted fields.");
+        // Bring the first problem into view — it may be far above the save bar.
+        requestAnimationFrame(() => {
+          const field = document.getElementById(fieldOf(errors[0].field));
+          field?.closest("div")?.scrollIntoView({ block: "center", behavior: "smooth" });
+          field?.focus({ preventScroll: true });
+        });
       } else {
         setFormError(apiError(err, "Could not save settings"));
       }

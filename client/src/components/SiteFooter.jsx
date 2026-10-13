@@ -53,7 +53,7 @@ const SiteFooter = () => {
           )}
           {contactPhone && (
             <p>
-              <Icon name="phone" size={16} /> <a href={`tel:${contactPhone}`}>{contactPhone}</a>
+              <Icon name="phone" size={16} /> <a href={`tel:${contactPhone.replace(/[^\d+]/g, "")}`}>{contactPhone}</a>
             </p>
           )}
           {whatsapp && (
