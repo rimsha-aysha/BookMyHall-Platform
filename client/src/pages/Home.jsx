@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useFetch } from "../hooks/useFetch.js";
@@ -6,6 +7,7 @@ import { galleryApi } from "../api/galleryApi.js";
 import HallCard from "../components/HallCard.jsx";
 import GalleryCard from "../components/GalleryCard.jsx";
 import Icon from "../components/Icon.jsx";
+import Lightbox from "../components/Lightbox.jsx";
 import { LoadingState } from "../components/States.jsx";
 import { usePublicSettings } from "../hooks/usePublicSettings.js";
 import { resolveImageUrl, formatRs } from "../utils/format.js";
@@ -41,6 +43,10 @@ const Home = () => {
   const { businessName, tagline, description, address } = settings;
   const cover = settings.coverImages?.[0];
   const rules = rulesSummary(settings);
+  // All of the restaurant's cover photos: the first leads the hero, the full
+  // set is shown in the About section when there is more than one.
+  const covers = settings.coverImages || [];
+  const [photoIndex, setPhotoIndex] = useState(null);
   const isCustomerOrGuest = !user || user.role === "customer";
 
   const featured = halls?.find((h) => h.images?.length) || halls?.[0];
@@ -120,7 +126,7 @@ const Home = () => {
         </div>
       </section>
 
-      {(description || rules.length > 0 || address) && (
+      {(description || rules.length > 0 || address || covers.length > 1) && (
         <section className="section">
           <div className="about-band">
             <p className="eyebrow">About {businessName}</p>
@@ -139,7 +145,28 @@ const Home = () => {
                 ))}
               </ul>
             )}
+            {covers.length > 1 && (
+              <div className="carousel-thumbs about-photos" aria-label={`Photos of ${businessName}`}>
+                {covers.map((src, i) => (
+                  <button
+                    key={`${src}-${i}`}
+                    type="button"
+                    onClick={() => setPhotoIndex(i)}
+                    aria-label={`Open photo ${i + 1} of ${covers.length}`}
+                  >
+                    <img src={resolveImageUrl(src)} alt="" loading="lazy" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+          <Lightbox
+            images={covers}
+            index={photoIndex}
+            onIndexChange={setPhotoIndex}
+            onClose={() => setPhotoIndex(null)}
+            caption={businessName}
+          />
         </section>
       )}
 

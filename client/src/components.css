@@ -2712,3 +2712,7 @@ ul.chips { list-style: none; padding: 0; }
   .brand { white-space: normal; }
   .brand-name { font-size: 1.05rem; line-height: 1.2; }
 }
+
+/* Restaurant cover photos in the home page's About section. */
+.about-photos { margin-top: 8px; }
+.about-photos button { width: 120px; height: 80px; opacity: 1; }
