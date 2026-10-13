@@ -94,6 +94,33 @@ describe("a fresh installation", () => {
     assert.equal("setupCompletedAt" in pub, false);
   });
 
+  test("an Owner-only setup keeps the default BookMyHall branding for later configuration", async () => {
+    const result = await setup({ owner: { name: "Asha Owner", email: "owner@bookmyhall.test" } });
+    assert.ok(result.actions.some((a) => a.includes('Keep the restaurant branding as "BookMyHall"')));
+
+    const settings = await Settings.findOne();
+    assert.equal(settings.businessName, "BookMyHall");
+    assert.ok(settings.setupCompletedAt instanceof Date);
+    assert.ok(await User.findOne({ email: "owner@bookmyhall.test", role: "owner" }));
+    assert.equal((await request(app).get("/api/settings/public")).body.data.businessName, "BookMyHall");
+
+    // The Owner then renames it from Restaurant Settings, which the site picks up.
+    const login = await request(app).post("/api/auth/login").send({ email: "owner@bookmyhall.test", password: PASSWORD });
+    const renamed = await request(app)
+      .put("/api/settings")
+      .set({ Authorization: `Bearer ${login.body.token}` })
+      .send({ businessName: "Spice Garden Banquets" });
+    assert.equal(renamed.status, 200, JSON.stringify(renamed.body));
+    assert.equal((await request(app).get("/api/settings/public")).body.data.businessName, "Spice Garden Banquets");
+  });
+
+  test("a partial restaurant section changes only the fields given", async () => {
+    await setup(config({ restaurant: { businessName: undefined, brandColor: "#123456" } }));
+    const settings = await Settings.findOne();
+    assert.equal(settings.businessName, "BookMyHall");
+    assert.equal(settings.brandColor, "#123456");
+  });
+
   test("the Owner email is stored in lower case", async () => {
     await setup(config());
     assert.ok(await User.findOne({ email: "owner@spicegarden.test", role: "owner" }));

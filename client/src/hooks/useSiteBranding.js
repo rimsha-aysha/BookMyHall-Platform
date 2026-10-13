@@ -49,7 +49,7 @@ export const useSiteBranding = () => {
 
   useEffect(() => {
     if (!loaded) return;
-    document.title = tagline ? `${businessName} — ${tagline}` : businessName;
+    document.title = `${businessName} — ${tagline || "Halls & Event Booking"}`;
   }, [loaded, businessName, tagline]);
 
   useEffect(() => {

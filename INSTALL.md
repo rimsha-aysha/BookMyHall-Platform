@@ -1,5 +1,10 @@
 # Installing BookMyHall Platform for a restaurant
 
+A fresh installation shows the default **BookMyHall** branding. Each
+restaurant's name, logo, cover photos, colours, contact details and booking
+rules are then set — without any code changes — through the setup script
+below and/or the Owner's **Admin → Settings** page.
+
 Each restaurant gets its **own, independent installation**: its own database,
 backend, frontend, image folder and payment keys. Nothing is shared between
 restaurants, and there is no central dashboard — after setup, the
@@ -78,6 +83,11 @@ restaurant's** database.
    example are git-ignored) and fill in the restaurant's details, its Owner's
    name and email, and optionally a starting catalog (halls, packages, food,
    decorations, services).
+   The `restaurant` section is optional: leave it out (or give only some
+   fields) and the site keeps the default **BookMyHall** branding for
+   everything not given, to be configured later in Restaurant Settings. The
+   smallest valid file is just the Owner:
+   `{ "owner": { "name": "…", "email": "…" } }`.
    **Never put a password, secret, token or key in this file** — the script
    refuses such fields.
 2. Check it without changing anything:

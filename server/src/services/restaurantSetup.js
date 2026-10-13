@@ -124,10 +124,12 @@ const validateConfig = async (config) => {
   const top = withoutNotes(config);
   const errors = unknownKeys(top, ["restaurant", "owner", "catalog"], "config");
 
-  // Restaurant settings — the API's own rules, then the model's cross-field rules.
+  // Restaurant settings — optional: anything left out keeps its current value
+  // (on a fresh installation, the default BookMyHall branding), so the real
+  // restaurant can also be configured later from Restaurant Settings.
+  // Validated with the API's own rules, then the model's cross-field rules.
   const restaurantInput = withoutNotes(top.restaurant);
-  if (!isPlainObject(top.restaurant)) errors.push("restaurant: required object");
-  if (!restaurantInput.businessName) errors.push("restaurant.businessName: required");
+  if (top.restaurant !== undefined && !isPlainObject(top.restaurant)) errors.push("restaurant: must be an object");
   errors.push(...unknownKeys(restaurantInput, RESTAURANT_FIELDS, "restaurant"));
   const restaurant = await runRules(settingsUpdateRules, restaurantInput, "restaurant");
   errors.push(...restaurant.errors);
@@ -236,12 +238,15 @@ export const runSetup = async ({ config, getOwnerPassword, force = false, dryRun
       catalogPlan.push([type, items]);
     }
   }
-  actions.push(`${existingSettings ? "Update" : "Create"} the restaurant settings for "${restaurant.businessName}"`);
-
   // The settings as they will be saved (merged into any existing ones),
   // validated now so a problem can't surface after other writes.
   const settings = existingSettings || new Settings();
   Object.assign(settings, restaurant, { setupCompletedAt: now });
+  actions.push(
+    Object.keys(restaurant).length
+      ? `${existingSettings ? "Update" : "Create"} the restaurant settings for "${settings.businessName}"`
+      : `Keep the restaurant branding as "${settings.businessName}" (change it later in Restaurant Settings)`
+  );
   try {
     await settings.validate();
   } catch (error) {

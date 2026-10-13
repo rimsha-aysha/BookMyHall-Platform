@@ -40,7 +40,7 @@ database — never a restaurant's live one).
 cd server
 cp .env.example .env    # then edit: local MONGODB_URI, MONGODB_DB_NAME, JWT_SECRET
 npm ci
-npm run setup:restaurant -- --config setup/restaurant.example.json
+npm run setup:restaurant -- --config setup/restaurant.example.json   # sample restaurant + Owner
 npm run dev
 ```
 
@@ -50,6 +50,10 @@ cp .env.example .env.local
 npm ci
 npm run dev
 ```
+
+A fresh installation shows the default **BookMyHall** branding; the setup
+file's `restaurant` section is optional, so an Owner-only file keeps it until
+the restaurant is configured in Admin → Settings.
 
 ## Tests
 

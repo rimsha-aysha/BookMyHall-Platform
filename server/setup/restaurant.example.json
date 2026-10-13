@@ -1,5 +1,5 @@
 {
-  "_readme": "Copy this file (e.g. to setup/my-restaurant.json — files in setup/ other than this example are git-ignored), replace every value, then run: npm run setup:restaurant -- --config setup/my-restaurant.json --dry-run. Never put passwords or keys in this file: the Owner's password is asked for when the setup runs. Logo and photos can be added afterwards from the admin panel (or given here as https:// image URLs). Keys starting with _ are notes and are ignored.",
+  "_readme": "Copy this file (e.g. to setup/my-restaurant.json — files in setup/ other than this example are git-ignored), replace every value, then run: npm run setup:restaurant -- --config setup/my-restaurant.json --dry-run. Never put passwords or keys in this file: the Owner's password is asked for when the setup runs. Logo and photos can be added afterwards from the admin panel (or given here as https:// image URLs). The restaurant section is optional: anything left out keeps the default BookMyHall branding, to be changed later in Restaurant Settings. Keys starting with _ are notes and are ignored.",
 
   "restaurant": {
     "businessName": "Your Restaurant Name",

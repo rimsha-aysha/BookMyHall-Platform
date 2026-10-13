@@ -8,8 +8,9 @@ const HEX_COLOR_OR_EMPTY = /^$|^#[0-9a-fA-F]{6}$/;
 // One installation serves one restaurant — exactly one Settings document
 // ever exists (enforced by the unique `key`). See settings.controller.js for
 // the get-or-create-default logic.
-// Defaults are deliberately neutral; each installation is configured with its
-// restaurant's own details (scripts/setupRestaurant.js, then System Settings).
+// A fresh installation shows the BookMyHall branding until it is configured
+// for its restaurant (scripts/setupRestaurant.js and/or Restaurant Settings)
+// — no source changes are needed per installation.
 // Every field added after the original release has a default that keeps the
 // earlier behaviour, so an existing Settings document needs no migration.
 const settingsSchema = new mongoose.Schema(
@@ -25,7 +26,7 @@ const settingsSchema = new mongoose.Schema(
     businessName: {
       type: String,
       trim: true,
-      default: "Our Restaurant",
+      default: "BookMyHall",
     },
     tagline: {
       type: String,

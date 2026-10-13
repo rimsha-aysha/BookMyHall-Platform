@@ -6,12 +6,12 @@ import { EVENT_TYPES } from "../utils/booking.js";
 // policies and booking rules set by the Owner in Restaurant Settings.
 // Fetched once per page load and shared by every component; saving the
 // settings calls refreshPublicSettings(), which updates every component
-// using them (header, footer, branding…) straight away. Falls back to
-// neutral defaults if the request fails. `loaded` is false until the first
+// using them (header, footer, branding…) straight away. Falls back to the
+// default BookMyHall branding if the request fails. `loaded` is false until the first
 // response (or failure), so the brand isn't flashed as the default name.
 const DEFAULTS = {
   loaded: false,
-  businessName: "Our Restaurant",
+  businessName: "BookMyHall",
   tagline: "",
   description: "",
   logoUrl: "",

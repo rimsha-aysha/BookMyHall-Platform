@@ -5,7 +5,7 @@ import { defineConfig, loadEnv } from 'vite'
 // title and link previews are right before any JavaScript runs. Each
 // installation sets its own VITE_SITE_TITLE / VITE_SITE_DESCRIPTION; the app
 // then refines the title from the restaurant's settings at runtime.
-const DEFAULT_TITLE = 'Halls & Event Booking'
+const DEFAULT_TITLE = 'BookMyHall — Halls & Event Booking'
 const DEFAULT_DESCRIPTION = 'Book halls and plan events — venues, packages, food, décor and live availability.'
 
 const escapeHtml = (value) =>

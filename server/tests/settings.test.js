@@ -51,9 +51,9 @@ beforeEach(async () => {
 });
 
 describe("defaults", () => {
-  test("a new installation starts with neutral details and the original booking behaviour", async () => {
+  test("a new installation shows the BookMyHall branding and the original booking behaviour", async () => {
     const s = await publicSettings();
-    assert.equal(s.businessName, "Our Restaurant");
+    assert.equal(s.businessName, "BookMyHall");
     assert.equal(s.tagline, "");
     assert.equal(s.logoUrl, "");
     assert.deepEqual(s.coverImages, []);
