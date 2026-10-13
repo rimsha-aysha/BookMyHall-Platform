@@ -50,7 +50,7 @@ const Home = () => {
           <p className="eyebrow">Halls &amp; event venues</p>
           <h1>Celebrate in a space made for the occasion</h1>
           <p className="lead">
-            {tagline && tagline !== "Hall & event booking for this restaurant." ? `${tagline} ` : ""}
+            {tagline ? `${tagline} ` : ""}
             Find the right hall at {businessName}, check live availability, build your menu and décor, and see your
             estimate before you book.
           </p>

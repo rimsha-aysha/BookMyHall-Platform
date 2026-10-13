@@ -1,7 +1,7 @@
 {
-  "name": "bookmyhall-server",
+  "name": "bookmyhall-platform-server",
   "version": "1.0.0",
-  "description": "BookMyHall backend REST API (Node.js + Express + MongoDB)",
+  "description": "BookMyHall Platform backend REST API (Node.js + Express + MongoDB)",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -10,7 +10,6 @@
     "create-user": "node scripts/createUser.js",
     "seed:gallery": "node scripts/seedGallery.js",
     "migrate:tasks": "node scripts/migratePreparationTasks.js",
-    "migrate:atlas": "node scripts/migrateToAtlas.js",
     "check:cloudinary": "node scripts/checkCloudinary.js",
     "test": "node --test --test-concurrency=1 \"tests/**/*.test.js\""
   },

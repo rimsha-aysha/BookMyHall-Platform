@@ -1,18 +1,20 @@
 import mongoose from "mongoose";
 
-// Single-restaurant deployment — exactly one Settings document ever exists.
-// See settings.controller.js for the get-or-create-default logic.
+// One installation serves one restaurant — exactly one Settings document
+// ever exists. See settings.controller.js for the get-or-create-default logic.
+// Defaults are deliberately neutral; each installation is configured with its
+// restaurant's own details (scripts/setupRestaurant.js, then System Settings).
 const settingsSchema = new mongoose.Schema(
   {
     businessName: {
       type: String,
       trim: true,
-      default: "BookMyHall",
+      default: "Our Restaurant",
     },
     tagline: {
       type: String,
       trim: true,
-      default: "Hall & event booking for this restaurant.",
+      default: "",
     },
     contactEmail: {
       type: String,

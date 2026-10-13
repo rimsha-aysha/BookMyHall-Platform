@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   await connectDB();
   app.listen(PORT, () => {
-    console.log(`BookMyHall server running on port ${PORT}`);
+    console.log(`BookMyHall Platform server running on port ${PORT}`);
   });
 };
 

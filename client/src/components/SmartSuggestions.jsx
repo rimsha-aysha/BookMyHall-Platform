@@ -351,8 +351,8 @@ const SmartSuggestions = ({ eventDetails, requirements, selection, onApplyPlan, 
           </div>
 
           <p className="muted small engine-note">
-            Suggestions by the BookMyHall smart engine ({result.engine.provider} v{result.engine.version}) using live
-            hall, menu and booking data.
+            Smart suggestions ({result.engine.provider} v{result.engine.version}) based on live hall, menu and
+            booking data.
           </p>
         </div>
       )}

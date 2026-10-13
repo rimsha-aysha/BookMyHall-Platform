@@ -5,8 +5,8 @@ import { settingsApi } from "../api/settingsApi.js";
 // System Settings. Fetched once per page load and shared by every caller;
 // falls back to defaults if the request fails.
 const DEFAULTS = {
-  businessName: "BookMyHall",
-  tagline: "Hall & event booking for this restaurant.",
+  businessName: "Our Restaurant",
+  tagline: "",
   contactEmail: "",
   contactPhone: "",
   address: "",
