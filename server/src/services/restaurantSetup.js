@@ -232,7 +232,7 @@ export const runSetup = async ({ config, getOwnerPassword, force = false, dryRun
     if (existing > 0) {
       actions.push(`Skip ${type}: ${existing} already in the database`);
     } else {
-      actions.push(`Add ${items.length} ${type}`);
+      actions.push(`Add ${items.length} ${items.length === 1 ? type.replace(/s$/, "") : type}`);
       catalogPlan.push([type, items]);
     }
   }
