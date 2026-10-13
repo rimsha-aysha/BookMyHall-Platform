@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { suggestionApi } from "../api/suggestionApi.js";
 import { resolveImageUrl, formatRs, apiError } from "../utils/format.js";
+import { usePublicSettings } from "../hooks/usePublicSettings.js";
 
 const FOOD_PREFERENCES = [
   { value: "any", label: "No preference" },
@@ -83,6 +84,9 @@ const SuggestionRow = ({ suggestion, selected, onToggle, actionLabel = ["Add", "
 // the live catalog — see server/src/services/suggestions) and lets the
 // customer apply the whole plan or pick individual suggestions into the form.
 const SmartSuggestions = ({ eventDetails, requirements, selection, onApplyPlan, onSelect }) => {
+  // The original wording, credited to this installation's restaurant
+  // ("BookMyHall" until it is configured).
+  const { businessName } = usePublicSettings();
   const [prefs, setPrefs] = useState({
     budget: "",
     foodPreference: "any",
@@ -351,8 +355,8 @@ const SmartSuggestions = ({ eventDetails, requirements, selection, onApplyPlan, 
           </div>
 
           <p className="muted small engine-note">
-            Smart suggestions ({result.engine.provider} v{result.engine.version}) based on live hall, menu and
-            booking data.
+            Suggestions by the {businessName} smart engine ({result.engine.provider} v{result.engine.version}) using
+            live hall, menu and booking data.
           </p>
         </div>
       )}

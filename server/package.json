@@ -9,6 +9,7 @@
     "start": "node server.js",
     "create-user": "node scripts/createUser.js",
     "setup:restaurant": "node scripts/setupRestaurant.js",
+    "seed:gallery": "node scripts/seedGallery.js",
     "migrate:tasks": "node scripts/migratePreparationTasks.js",
     "check:cloudinary": "node scripts/checkCloudinary.js",
     "test": "node --test --test-concurrency=1 \"tests/**/*.test.js\""

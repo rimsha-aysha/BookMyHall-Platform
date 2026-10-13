@@ -41,6 +41,7 @@ cd server
 cp .env.example .env    # then edit: local MONGODB_URI, MONGODB_DB_NAME, JWT_SECRET
 npm ci
 npm run setup:restaurant -- --config setup/restaurant.example.json   # sample restaurant + Owner
+npm run seed:gallery     # optional: demo photos and past events (demo/test/dev databases only)
 npm run dev
 ```
 
