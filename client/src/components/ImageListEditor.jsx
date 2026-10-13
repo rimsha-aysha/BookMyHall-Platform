@@ -4,7 +4,8 @@ import { resolveImageUrl, apiError } from "../utils/format.js";
 
 // Controlled editor for an ordered list of image references (uploaded
 // "/uploads/..." paths or external URLs). The first image is the cover.
-const ImageListEditor = ({ id, value, onChange, max = 30 }) => {
+// ordered={false} (e.g. a single logo) hides the cover badge and reordering.
+const ImageListEditor = ({ id, value, onChange, max = 30, ordered = true }) => {
   const images = value || [];
   const [urlInput, setUrlInput] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -64,23 +65,27 @@ const ImageListEditor = ({ id, value, onChange, max = 30 }) => {
           {images.map((src, i) => (
             <figure key={`${src}-${i}`} className="image-editor-item">
               <img src={resolveImageUrl(src)} alt={`Photo ${i + 1}`} loading="lazy" />
-              {i === 0 && <span className="badge badge-accent image-editor-cover">Cover</span>}
+              {ordered && i === 0 && <span className="badge badge-accent image-editor-cover">Cover</span>}
               <figcaption>
-                <button type="button" onClick={() => move(i, i - 1)} disabled={i === 0} aria-label="Move left" title="Move left">
-                  ←
-                </button>
-                <button type="button" onClick={() => move(i, 0)} disabled={i === 0} title="Make cover photo">
-                  ★
-                </button>
-                <button
-                  type="button"
-                  onClick={() => move(i, i + 1)}
-                  disabled={i === images.length - 1}
-                  aria-label="Move right"
-                  title="Move right"
-                >
-                  →
-                </button>
+                {ordered && (
+                  <>
+                    <button type="button" onClick={() => move(i, i - 1)} disabled={i === 0} aria-label="Move left" title="Move left">
+                      ←
+                    </button>
+                    <button type="button" onClick={() => move(i, 0)} disabled={i === 0} title="Make cover photo">
+                      ★
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => move(i, i + 1)}
+                      disabled={i === images.length - 1}
+                      aria-label="Move right"
+                      title="Move right"
+                    >
+                      →
+                    </button>
+                  </>
+                )}
                 <button
                   type="button"
                   className="danger"
@@ -129,7 +134,8 @@ const ImageListEditor = ({ id, value, onChange, max = 30 }) => {
         </div>
       </div>
       <p className="muted small">
-        {images.length} photo{images.length === 1 ? "" : "s"} · JPG, PNG, WEBP or GIF up to 5 MB each · ★ sets the cover photo
+        {images.length} photo{images.length === 1 ? "" : "s"} · JPG, PNG, WEBP or GIF up to 5 MB each
+        {ordered && " · ★ sets the cover photo"}
       </p>
       {error && <p role="alert">{error}</p>}
     </div>

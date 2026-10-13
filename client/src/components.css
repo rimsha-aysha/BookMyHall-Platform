@@ -2604,3 +2604,67 @@ button.danger { color: var(--danger); }
 
 .offline-form { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
 .offline-form h3 { margin-top: 0; }
+
+/* ---- Restaurant settings (owner) ---- */
+
+.settings-form .form-card > h2:first-child { margin-bottom: 4px; }
+.settings-form .form-card > .muted.small { margin: 0 0 16px; }
+.settings-form .form-card > div { margin-bottom: 16px; }
+
+/* Inline, compact error under a single field (overrides the alert box). */
+p.field-error[role="alert"] {
+  display: block;
+  margin: 6px 0 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  font-size: 0.82rem;
+}
+
+.inline-field { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+.inline-field input { flex: 1; min-width: 0; }
+
+ul.chips { list-style: none; padding: 0; }
+.chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin: 0 -4px 0 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+}
+.chip-remove:hover { background: var(--danger-bg); color: var(--danger); }
+
+.color-field { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.color-field input[type="color"] {
+  width: 48px;
+  height: 36px;
+  padding: 2px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+}
+.color-preview { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-top: 10px; font-weight: 500; }
+.color-preview-button { padding: 8px 14px; border-radius: var(--radius-sm); font-size: 0.9rem; }
+
+.settings-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 12px 0;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+.settings-actions p { margin: 0; }
