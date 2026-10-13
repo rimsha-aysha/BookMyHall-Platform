@@ -66,6 +66,12 @@ const bookingSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
+    // True when staff entering a walk-in overrode the restaurant's notice
+    // period or opening hours (services/bookingRules.js). Absent otherwise.
+    rulesOverridden: {
+      type: Boolean,
+      default: undefined,
+    },
     hall: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Hall",

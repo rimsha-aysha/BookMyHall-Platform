@@ -9,7 +9,10 @@ import { ROLES } from "../config/roles.js";
 import { BOOKING_STATUS, BOOKING_SOURCE, NON_BLOCKING_BOOKING_STATUSES } from "../config/bookingStatus.js";
 import { PREPARATION_STATUS } from "../config/preparationStatus.js";
 import { syncPreparationTasks, allRequiredTasksCompleted } from "../services/preparationTasks.js";
+import { checkBookingRules } from "../services/bookingRules.js";
+import { getOrCreateSettings } from "./settings.controller.js";
 import { createKeyedLock } from "../utils/keyedLock.js";
+import { todayInRestaurant } from "../config/region.js";
 
 const SELECTION_POPULATE = [
   { path: "customer", select: "name email" },
@@ -188,9 +191,22 @@ const createPricedBooking = async (body, extra) => {
   return booking;
 };
 
+// Applies the restaurant's booking rules (event types, notice, opening hours,
+// days ahead) before any pricing or availability work. Returns the request
+// body with the event type in its configured spelling, plus whether a staff
+// override waived a rule. Availability and double-booking are still checked
+// by createPricedBooking for every booking, overridden or not.
+const applyBookingRules = async (body, { allowOverride = false } = {}) => {
+  const settings = await getOrCreateSettings();
+  const result = checkBookingRules(settings, body, { allowOverride });
+  if (result.error) throw new BookingError(400, result.error);
+  return { body: { ...body, eventType: result.eventType }, rulesOverridden: result.rulesOverridden };
+};
+
 export const createBooking = async (req, res, next) => {
   try {
-    const booking = await createPricedBooking(req.body, {
+    const { body } = await applyBookingRules(req.body);
+    const booking = await createPricedBooking(body, {
       customer: req.user.id,
       source: BOOKING_SOURCE.ONLINE,
       status: BOOKING_STATUS.PENDING,
@@ -213,11 +229,18 @@ export const createBooking = async (req, res, next) => {
 // the normal workflow: an advance payment (recorded offline, or online)
 // confirms it, after which a coordinator can be assigned. It starts
 // unpaid — creating it never marks anything as paid.
+// With overrideBookingRules, staff may book outside the customer-facing
+// notice period and opening hours (recorded as rulesOverridden); hall
+// availability and double-booking prevention still apply in full.
 export const createWalkInBooking = async (req, res, next) => {
   try {
-    const { customerName, customerPhone, customerEmail } = req.body;
+    const { customerName, customerPhone, customerEmail, overrideBookingRules } = req.body;
+    const { body, rulesOverridden } = await applyBookingRules(req.body, {
+      allowOverride: overrideBookingRules === true,
+    });
     const now = new Date();
-    const booking = await createPricedBooking(req.body, {
+    const booking = await createPricedBooking(body, {
+      ...(rulesOverridden && { rulesOverridden: true }),
       customer: null,
       source: BOOKING_SOURCE.WALK_IN,
       walkInCustomer: {
@@ -315,15 +338,17 @@ const toMinutes = (time) => {
   return h * 60 + m;
 };
 
-const longestFreeGap = (slots) => {
-  let cursor = 0;
+// Longest free stretch between dayStart and dayEnd (minutes) — the whole day
+// by default, or the restaurant's opening hours when it has set them.
+const longestFreeGap = (slots, dayStart = 0, dayEnd = DAY_END_MINUTES) => {
+  let cursor = dayStart;
   let longest = 0;
   const sorted = [...slots].sort((a, b) => a.startTime.localeCompare(b.startTime));
   for (const slot of sorted) {
     longest = Math.max(longest, toMinutes(slot.startTime) - cursor);
     cursor = Math.max(cursor, toMinutes(slot.endTime));
   }
-  return Math.max(longest, DAY_END_MINUTES - cursor);
+  return Math.max(longest, dayEnd - cursor);
 };
 
 // "YYYY-MM" -> [first day of month, first day of next month) at UTC
@@ -347,6 +372,12 @@ export const getHallAvailability = async (req, res, next) => {
       res.status(404);
       return next(new Error("Selected hall does not exist or is not active"));
     }
+
+    // Customers can only book within opening hours (when set), so a day is
+    // fully booked once those hours have no free slot left.
+    const { openingTime, closingTime } = await getOrCreateSettings();
+    const bookableWindow =
+      openingTime && closingTime ? [toMinutes(openingTime), toMinutes(closingTime)] : [];
 
     const { start, end } = monthRange(req.query.month);
     const bookings = await Booking.find({
@@ -374,7 +405,7 @@ export const getHallAvailability = async (req, res, next) => {
     const days = [...byDate].map(([date, slots]) => ({
       date,
       slots,
-      fullyBooked: longestFreeGap(slots) < MIN_FREE_SLOT_MINUTES,
+      fullyBooked: longestFreeGap(slots, ...bookableWindow) < MIN_FREE_SLOT_MINUTES,
     }));
 
     res.json({
@@ -382,9 +413,9 @@ export const getHallAvailability = async (req, res, next) => {
       data: {
         hall: { _id: hall._id, name: hall.name, capacity: hall.capacity },
         month: req.query.month,
-        // Server's "today" — the same reference the booking validators use
-        // to reject past dates, so the calendar never offers one.
-        today: new Date().toLocaleDateString("en-CA"),
+        // The restaurant's "today" — the same reference the booking
+        // validators use to reject past dates, so the calendar never offers one.
+        today: todayInRestaurant(),
         days,
       },
     });
@@ -509,7 +540,7 @@ export const updateBookingStatus = async (req, res, next) => {
 
     // An event can only be marked completed once its date has arrived.
     if (req.body.status === BOOKING_STATUS.COMPLETED) {
-      const today = toDateOnly(new Date().toLocaleDateString("en-CA"));
+      const today = toDateOnly(todayInRestaurant());
       if (booking.eventDate > today) {
         res.status(400);
         return next(

@@ -2,13 +2,15 @@ import { body, param, query } from "express-validator";
 import { BOOKING_STATUS } from "../config/bookingStatus.js";
 import { ALL_PREPARATION_STATUSES } from "../config/preparationStatus.js";
 import { normalizePhone, isValidIndianMobile, INVALID_PHONE_MESSAGE } from "../utils/phone.js";
+import { todayInRestaurant } from "../config/region.js";
 
 export const TIME_FORMAT = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 // Bookings/availability checks are for today or later. Compared as
-// YYYY-MM-DD strings in the server's local date, matching the date-only
-// value the client's <input type="date"> sends.
-const todayLocal = () => new Date().toLocaleDateString("en-CA");
+// YYYY-MM-DD strings in the restaurant's date (Asia/Kolkata, whatever the
+// server's own time zone), matching the date-only value the client's
+// <input type="date"> sends. Applies to every booking, walk-ins included.
+const todayLocal = () => todayInRestaurant();
 const notInPast = (value) => {
   if (String(value).slice(0, 10) < todayLocal()) {
     throw new Error("Event date cannot be in the past");
@@ -197,4 +199,10 @@ export const walkInBookingRules = [
     .withMessage("Customer email must be a valid email address")
     .bail()
     .normalizeEmail({ gmail_remove_dots: false }),
+  // Staff only: book outside the customer-facing notice period and opening
+  // hours. Never bypasses past dates, availability or double-booking checks.
+  body("overrideBookingRules")
+    .optional()
+    .isBoolean({ strict: true })
+    .withMessage("overrideBookingRules must be true or false"),
 ];

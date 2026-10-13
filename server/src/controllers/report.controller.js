@@ -13,6 +13,7 @@ import { TASK_STATUS } from "../config/taskStatus.js";
 import { ISSUE_STATUS } from "../config/issueStatus.js";
 import { ALL_PREPARATION_STATUSES } from "../config/preparationStatus.js";
 import { ALL_TASK_STATUSES } from "../config/taskStatus.js";
+import { todayInRestaurant } from "../config/region.js";
 
 // Shared by getOverview and getManagerOverview — one place that counts
 // bookings per status, reused instead of duplicated.
@@ -101,7 +102,7 @@ export const getOverview = async (req, res, next) => {
       .reduce((sum, b) => sum + b.estimatedCost, 0);
 
     // Next events on the calendar (accepted, not yet completed).
-    const todayStart = new Date(new Date().toLocaleDateString("en-CA"));
+    const todayStart = new Date(todayInRestaurant());
     const upcomingEvents = bookings
       .filter(
         (b) =>

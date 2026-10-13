@@ -1,5 +1,6 @@
 import { body, param } from "express-validator";
 import { OFFLINE_PAYMENT_METHODS } from "../config/paymentStatus.js";
+import { todayInRestaurant } from "../config/region.js";
 
 // Razorpay ids are short ASCII tokens ("order_…", "pay_…"); the signature is
 // a hex HMAC. Shape checks only — authenticity is proven by the signature.
@@ -29,7 +30,8 @@ export const paymentFailureRules = [
 
 // ---- Offline payments ----
 
-const todayLocal = () => new Date().toLocaleDateString("en-CA");
+// The restaurant's today (Asia/Kolkata), whatever the server's time zone.
+const todayLocal = () => todayInRestaurant();
 
 // UTR / UPI ref / cheque or receipt no. Letters, digits and - _ / . only, so
 // it can't carry anything else; at least 6 characters, which also keeps a
