@@ -6,6 +6,7 @@ const fields = [
   { name: "description", label: "Description", type: "textarea" },
   { name: "price", label: "Price", type: "number", required: true },
   { name: "category", label: "Category / Theme", type: "text" },
+  { name: "images", label: "Photos", type: "images" },
 ];
 
 const ManageDecorations = () => (

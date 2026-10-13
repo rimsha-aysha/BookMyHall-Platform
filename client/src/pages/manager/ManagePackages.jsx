@@ -6,6 +6,7 @@ const fields = [
   { name: "description", label: "Description", type: "textarea" },
   { name: "price", label: "Price", type: "number", required: true },
   { name: "includedItems", label: "Included Items (comma separated)", type: "list" },
+  { name: "images", label: "Photos", type: "images" },
 ];
 
 const ManagePackages = () => (

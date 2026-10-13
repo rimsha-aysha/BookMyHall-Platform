@@ -1,6 +1,6 @@
 // Building blocks shared by the customer booking form and the manager's
 // walk-in booking form.
-import { formatRs } from "../utils/format.js";
+import { formatRs, resolveImageUrl } from "../utils/format.js";
 
 const groupByCategory = (items) =>
   (items || []).reduce((acc, item) => {
@@ -23,6 +23,9 @@ export const SelectableItemList = ({ items, selectedIds, onToggle }) => {
           return (
             <label key={item._id} className={`option-card ${checked ? "selected" : ""}`}>
               <input type="checkbox" checked={checked} onChange={() => onToggle(item._id)} />
+              {item.images?.[0] && (
+                <img className="option-thumb" src={resolveImageUrl(item.images[0])} alt="" loading="lazy" />
+              )}
               <span className="option-body">
                 <span className="option-title">{item.name}</span>
                 {item.description && <span className="option-desc clamp-2">{item.description}</span>}

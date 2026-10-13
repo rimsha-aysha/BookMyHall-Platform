@@ -21,6 +21,13 @@ const packageSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    // Photos shown to customers, same forms as Hall.images (uploaded
+    // "/uploads/…" paths or http(s) URLs); the first is the cover. Items
+    // created before photos existed simply have none.
+    images: {
+      type: [String],
+      default: [],
+    },
     isActive: {
       type: Boolean,
       default: true,

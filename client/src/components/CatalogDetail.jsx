@@ -3,12 +3,13 @@ import { useParams, Link } from "react-router-dom";
 import { useFetch } from "../hooks/useFetch.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import Icon from "./Icon.jsx";
+import ImageCarousel from "./ImageCarousel.jsx";
 import { EmptyState, ErrorState } from "./States.jsx";
 import { formatRs } from "../utils/format.js";
 
-// Shared detail page for packages / food / decorations: back link, title
-// block with category and price, description, optional included items, and
-// a booking call to action.
+// Shared detail page for packages / food / decorations: back link, photos
+// (when the item has any), title block with category and price, description,
+// optional included items, and a booking call to action.
 const CatalogDetail = ({ fetchById, back, icon, notFoundTitle, includesTitle, getIncludes }) => {
   const { id } = useParams();
   const { user } = useAuth();
@@ -38,6 +39,7 @@ const CatalogDetail = ({ fetchById, back, icon, notFoundTitle, includesTitle, ge
       {!loading && !error && item && (
         <div className="detail-layout">
           <article className="card">
+            {item.images?.length > 0 && <ImageCarousel images={item.images} alt={item.name} />}
             <div className="card-body">
               <div className="item-card-top">
                 <span className="item-icon" aria-hidden="true">

@@ -1546,6 +1546,13 @@ button.danger { color: var(--danger); }
 .option-card.selected { border-color: var(--accent); background: var(--accent-bg); box-shadow: inset 0 0 0 1px var(--accent); }
 .option-card.disabled { opacity: 0.55; }
 .option-card .price { margin-left: auto; padding-left: 8px; }
+.option-thumb {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
 
 .option-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .option-title { font-weight: 600; color: var(--text-h); }
