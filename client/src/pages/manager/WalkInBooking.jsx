@@ -7,11 +7,18 @@ import AvailabilityCalendar from "../../components/AvailabilityCalendar.jsx";
 import PageHeader from "../../components/PageHeader.jsx";
 import Icon from "../../components/Icon.jsx";
 import { SelectableItemList, Section } from "../../components/BookingFormParts.jsx";
-import { EVENT_TYPES, toggleId } from "../../utils/booking.js";
+import { toggleId } from "../../utils/booking.js";
+import {
+  bookingWindow,
+  dateProblem,
+  eventTypeOptions,
+  hasOpeningHours,
+  openingHoursProblem,
+} from "../../utils/bookingRules.js";
 import { WalkInBadge } from "../../components/BookingStatus.jsx";
 import { LoadingState, ErrorState } from "../../components/States.jsx";
 import { usePublicSettings } from "../../hooks/usePublicSettings.js";
-import { formatRs, formatDate, formatTimeRange, apiError } from "../../utils/format.js";
+import { formatRs, formatDate, formatTime, formatTimeRange, apiError } from "../../utils/format.js";
 import { isValidIndianMobile, INVALID_PHONE_MESSAGE, phoneInputValue } from "../../utils/phone.js";
 
 const EMPTY_FORM = {
@@ -30,6 +37,9 @@ const EMPTY_FORM = {
   food: [],
   decorations: [],
   services: [],
+  // Staff may book outside the customer-facing notice period and opening
+  // hours; the server still checks availability and double-booking.
+  overrideRules: false,
 };
 
 // Manager/Owner: book a hall for a customer who came to the venue in person
@@ -37,7 +47,9 @@ const EMPTY_FORM = {
 // availability and saves it as an approved walk-in booking; payments are then
 // recorded from the booking's page.
 const WalkInBooking = () => {
-  const { advancePaymentPercentage } = usePublicSettings();
+  const settings = usePublicSettings();
+  const { advancePaymentPercentage } = settings;
+  const eventTypes = eventTypeOptions(settings);
   const { data: halls, loading: hallsLoading, error: hallsError } = useFetch(hallsApi.listActive);
   const { data: packages, loading: packagesLoading, error: packagesError } = useFetch(packagesApi.listActive);
   const { data: foods, loading: foodsLoading, error: foodsError } = useFetch(foodsApi.listActive);
@@ -123,16 +135,29 @@ const WalkInBooking = () => {
   const estimatedCost = costLines.reduce((total, line) => total + line.amount, 0);
 
   const guestCountExceedsCapacity = selectedHall && form.guestCount && Number(form.guestCount) > selectedHall.capacity;
-  const eventType = form.eventType === "Other" ? form.customEventType.trim() : form.eventType;
+  const eventType = !eventTypes.includes(form.eventType)
+    ? ""
+    : form.eventType === "Other"
+      ? form.customEventType.trim()
+      : form.eventType;
   const phoneInvalid = form.customerPhone.trim() !== "" && !isValidIndianMobile(form.customerPhone);
+
+  // The override is only offered when the restaurant has a notice period or
+  // opening hours to waive; the days-ahead limit always applies.
+  const hasOverridableRules = Number(settings.minNoticeDays) > 0 || hasOpeningHours(settings);
+  const override = hasOverridableRules && form.overrideRules;
+  const { minDate, maxDate } = bookingWindow(settings, { override });
+  const hoursProblem = openingHoursProblem(settings, form.startTime, form.endTime, { override });
+  const eventDateProblem = dateProblem(settings, form.eventDate, { override });
 
   const blockers = [];
   if (!form.customerName.trim()) blockers.push("enter the customer's name");
   if (!form.customerPhone.trim() || phoneInvalid) blockers.push("enter a valid phone number");
   if (!eventType) blockers.push("choose an event type");
   if (!form.hall) blockers.push("select a hall");
-  if (!form.eventDate) blockers.push("pick a date");
+  if (!form.eventDate || eventDateProblem) blockers.push("pick a date");
   if (!timesValid) blockers.push("set a valid start and end time");
+  if (hoursProblem) blockers.push("choose times within opening hours (or override)");
   if (!form.guestCount) blockers.push("enter the guest count");
   if (guestCountExceedsCapacity) blockers.push("reduce guests or pick a larger hall");
   if (availability?.available === false) blockers.push("choose a free hall/time slot");
@@ -159,6 +184,7 @@ const WalkInBooking = () => {
         services: form.services,
       };
       if (form.package) payload.package = form.package;
+      if (override) payload.overrideBookingRules = true;
       const res = await bookingApi.createWalkIn(payload);
       setBooking(res.data.data);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -304,7 +330,7 @@ const WalkInBooking = () => {
                   <label htmlFor="eventType">Event Type</label>
                   <select id="eventType" name="eventType" value={form.eventType} onChange={handleChange} required>
                     <option value="">Select event type</option>
-                    {EVENT_TYPES.map((type) => (
+                    {eventTypes.map((type) => (
                       <option key={type} value={type}>
                         {type}
                       </option>
@@ -380,14 +406,39 @@ const WalkInBooking = () => {
               title="Date & time"
               subtitle={selectedHall ? `Live availability for ${selectedHall.name}.` : "Select a hall to see its calendar."}
             >
+              {hasOverridableRules && (
+                <div className="override-box">
+                  <label className="inline-check">
+                    <input
+                      type="checkbox"
+                      checked={form.overrideRules}
+                      onChange={(e) => setForm((prev) => ({ ...prev, overrideRules: e.target.checked }))}
+                    />
+                    Override the notice period and opening hours for this booking
+                  </label>
+                  <p className="field-help">
+                    {[
+                      Number(settings.minNoticeDays) > 0 && `Customers need ${settings.minNoticeDays} day(s) notice`,
+                      hasOpeningHours(settings) &&
+                        `events run ${formatTime(settings.openingTime)} – ${formatTime(settings.closingTime)}`,
+                    ]
+                      .filter(Boolean)
+                      .join("; ")}
+                    . Hall availability and double-booking checks always apply.
+                  </p>
+                </div>
+              )}
               {form.hall && (
                 <AvailabilityCalendar
                   hallId={form.hall}
                   value={form.eventDate}
                   onChange={selectDate}
                   refreshKey={calendarRefresh}
+                  minDate={minDate}
+                  maxDate={maxDate}
                 />
               )}
+              {eventDateProblem && <p role="alert">{eventDateProblem}</p>}
               <div className="form-row">
                 <div>
                   <label htmlFor="startTime">Start Time</label>
@@ -399,6 +450,7 @@ const WalkInBooking = () => {
                 </div>
               </div>
               {form.startTime && form.endTime && !timesValid && <p role="alert">End time must be after start time.</p>}
+              {timesValid && hoursProblem && <p role="alert">{hoursProblem}</p>}
             </Section>
 
             <Section number="5" title="Package" subtitle="Optional bundle.">

@@ -34,6 +34,7 @@ const PATHS = {
   ),
   check: <path d="M20 6 9 17l-5-5" />,
   x: <path d="M18 6 6 18M6 6l12 12" />,
+  message: <path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.5L3 21l2-5.7A8.4 8.4 0 1 1 21 11.5Z" />,
   arrowRight: <path d="M5 12h14M13 5l7 7-7 7" />,
   arrowLeft: <path d="M19 12H5M11 19l-7-7 7-7" />,
   chevronLeft: <path d="m15 18-6-6 6-6" />,

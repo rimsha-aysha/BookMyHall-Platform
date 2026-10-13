@@ -23,7 +23,12 @@ export const formatTime = (time) => {
 
 export const formatTimeRange = (start, end) => `${formatTime(start)} – ${formatTime(end)}`;
 
-export const todayInputValue = () => new Date().toLocaleDateString("en-CA");
+// The restaurant's time zone (this release: India only). "Today" for date
+// pickers is the restaurant's date — the same one the server validates
+// against — whatever the visitor's own time zone.
+export const RESTAURANT_TIMEZONE = "Asia/Kolkata";
+
+export const todayInputValue = () => new Date().toLocaleDateString("en-CA", { timeZone: RESTAURANT_TIMEZONE });
 
 export const GENERIC_ERROR = "Something went wrong. Please try again.";
 

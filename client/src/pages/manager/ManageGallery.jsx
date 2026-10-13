@@ -6,8 +6,10 @@ import { hallsApi } from "../../api/catalogApi.js";
 import ImageListEditor from "../../components/ImageListEditor.jsx";
 import { resolveImageUrl, formatDate, apiError } from "../../utils/format.js";
 import { LoadingState, EmptyState, ErrorState } from "../../components/States.jsx";
+import { usePublicSettings } from "../../hooks/usePublicSettings.js";
 
-const EVENT_TYPES = ["Wedding", "Engagement", "Birthday", "Anniversary", "Corporate Event", "Conference", "Other"];
+// Event-type suggestions come from the restaurant's own list (Restaurant
+// Settings); any wording is still accepted for past events.
 
 const EMPTY_FORM = {
   title: "",
@@ -34,6 +36,7 @@ const toForm = (entry) => ({
 // Halls come from the public list so a Manager with gallery (but not
 // catalog) permission can still tag entries with a hall.
 const ManageGallery = () => {
+  const { eventTypes } = usePublicSettings();
   const { data: entries, loading, error, reload } = useFetch(galleryApi.listAll);
   const { data: halls } = useFetch(hallsApi.listActive);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -138,7 +141,7 @@ const ManageGallery = () => {
               required
             />
             <datalist id="g-type-options">
-              {EVENT_TYPES.map((t) => (
+              {eventTypes.map((t) => (
                 <option key={t} value={t} />
               ))}
             </datalist>

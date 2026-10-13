@@ -9,6 +9,7 @@ import Icon from "../components/Icon.jsx";
 import { LoadingState } from "../components/States.jsx";
 import { usePublicSettings } from "../hooks/usePublicSettings.js";
 import { resolveImageUrl, formatRs } from "../utils/format.js";
+import { rulesSummary } from "../utils/bookingRules.js";
 
 const ROLE_HOME = {
   manager: { to: "/manager", label: "Go to dashboard" },
@@ -36,7 +37,10 @@ const Home = () => {
   const { user } = useAuth();
   const { data: halls, loading: hallsLoading } = useFetch(hallsApi.listActive);
   const { data: recentEvents } = useFetch(fetchRecentEvents);
-  const { businessName, tagline } = usePublicSettings();
+  const settings = usePublicSettings();
+  const { businessName, tagline, description, address } = settings;
+  const cover = settings.coverImages?.[0];
+  const rules = rulesSummary(settings);
   const isCustomerOrGuest = !user || user.role === "customer";
 
   const featured = halls?.find((h) => h.images?.length) || halls?.[0];
@@ -51,7 +55,8 @@ const Home = () => {
           <h1>Celebrate in a space made for the occasion</h1>
           <p className="lead">
             {tagline ? `${tagline} ` : ""}
-            Find the right hall at {businessName}, check live availability, build your menu and décor, and see your
+            Find the right hall{settings.loaded ? ` at ${businessName}` : ""}, check live availability, build your menu and
+            décor, and see your
             estimate before you book.
           </p>
           <div className="hero-actions">
@@ -93,7 +98,9 @@ const Home = () => {
         </div>
 
         <div className="hero-media">
-          {featured?.images?.[0] ? (
+          {cover ? (
+            <img src={resolveImageUrl(cover)} alt={businessName} />
+          ) : featured?.images?.[0] ? (
             <>
               <img src={resolveImageUrl(featured.images[0])} alt={featured.name} />
               <Link to={`/halls/${featured._id}`} className="hero-media-caption">
@@ -112,6 +119,29 @@ const Home = () => {
           )}
         </div>
       </section>
+
+      {(description || rules.length > 0 || address) && (
+        <section className="section">
+          <div className="about-band">
+            <p className="eyebrow">About {businessName}</p>
+            {description && <p className="lead pre-line">{description}</p>}
+            {(rules.length > 0 || address) && (
+              <ul className="about-facts">
+                {address && (
+                  <li>
+                    <Icon name="pin" size={15} /> {address}
+                  </li>
+                )}
+                {rules.map((rule) => (
+                  <li key={rule}>
+                    <Icon name="clock" size={15} /> {rule}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      )}
 
       <section className="section">
         <div className="section-head">

@@ -11,6 +11,7 @@ const TONES = {
   booked: { label: "Partly booked", note: "Limited" },
   full: { label: "Fully booked", note: "Booked" },
   past: { label: "Past date", note: "" },
+  outside: { label: "Outside the booking window", note: "" },
 };
 
 const LEGEND = ["available", "pending", "booked", "full"].map((tone) => ({
@@ -22,8 +23,9 @@ const SLOT_LABELS = { booked: "Booked", pending: "Pending" };
 const SLOT_TONES = { booked: "danger", pending: "warning" };
 const BOOKED_MESSAGE = "Sorry, this hall is already booked for this date.";
 
-const dayTone = (dateKey, today, info) => {
+const dayTone = (dateKey, today, info, minDate, maxDate) => {
   if (dateKey < today) return "past";
+  if ((minDate && dateKey < minDate) || (maxDate && dateKey > maxDate)) return "outside";
   if (!info) return "available";
   if (info.fullyBooked) return "full";
   return info.slots.some((s) => s.state === "booked") ? "booked" : "pending";
@@ -39,7 +41,10 @@ const longDate = (dateKey) =>
 // check-availability call and createBooking still validate the exact time.
 // Fully booked days can't be picked; if the chosen date is fully booked in a
 // newly selected hall, a warning is shown (and the server would refuse it).
-const AvailabilityCalendar = ({ hallId, value, onChange, refreshKey = 0 }) => {
+// minDate/maxDate (YYYY-MM-DD, optional) limit selection to the restaurant's
+// booking window (minimum notice / maximum days ahead); days outside it are
+// shown like past days.
+const AvailabilityCalendar = ({ hallId, value, onChange, refreshKey = 0, minDate = "", maxDate = "" }) => {
   const [month, setMonth] = useState(() => toMonthKey(value || todayInputValue()));
   // Fetched months, keyed by hall/month/refreshKey: { data } or { error }.
   const [months, setMonths] = useState({});
@@ -85,11 +90,13 @@ const AvailabilityCalendar = ({ hallId, value, onChange, refreshKey = 0 }) => {
   if (!hallId) return null;
 
   const openDays = data
-    ? monthGrid(month).filter((d) => d && d >= today && !days.get(d)?.fullyBooked).length
+    ? monthGrid(month).filter(
+        (d) => d && !["past", "outside", "full"].includes(dayTone(d, today, days.get(d), minDate, maxDate))
+      ).length
     : null;
 
   const renderDay = (dateKey) => {
-    const tone = dayTone(dateKey, today, days.get(dateKey));
+    const tone = dayTone(dateKey, today, days.get(dateKey), minDate, maxDate);
     const full = tone === "full";
     const selected = value === dateKey;
     return (
@@ -100,7 +107,7 @@ const AvailabilityCalendar = ({ hallId, value, onChange, refreshKey = 0 }) => {
         }`}
         // Fully booked days stay focusable/tappable (aria-disabled) so the
         // customer gets an explanation instead of a dead button.
-        disabled={!data || tone === "past"}
+        disabled={!data || tone === "past" || tone === "outside"}
         aria-disabled={full || undefined}
         aria-pressed={selected}
         data-date={dateKey}
@@ -115,7 +122,7 @@ const AvailabilityCalendar = ({ hallId, value, onChange, refreshKey = 0 }) => {
         }}
       >
         <span className="calendar-day-num">{Number(dateKey.slice(8))}</span>
-        {data && tone !== "past" && <span className="calendar-marker" aria-hidden="true" />}
+        {data && tone !== "past" && tone !== "outside" && <span className="calendar-marker" aria-hidden="true" />}
         {data && TONES[tone].note && <span className="calendar-day-note">{TONES[tone].note}</span>}
       </button>
     );

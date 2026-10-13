@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { ROLES } from "../constants/roles.js";
-import { usePublicSettings } from "../hooks/usePublicSettings.js";
+import BrandMark from "./BrandMark.jsx";
 import Icon from "./Icon.jsx";
 
 // Public browsing — guests and customers.
@@ -110,7 +110,6 @@ const SiteHeader = () => {
     };
   }, [location.pathname]);
 
-  const { businessName } = usePublicSettings();
   const isStaff = user && user.role !== ROLES.CUSTOMER;
   const allowed = (l) => !l.perm || user.role !== ROLES.MANAGER || user.permissions?.[l.perm] !== false;
   const mainLinks = isStaff ? (STAFF_LINKS[user.role] || []).filter(allowed) : PUBLIC_LINKS;
@@ -119,12 +118,7 @@ const SiteHeader = () => {
     <header className="site-header">
       <div className="container">
         <div className="site-header-bar">
-          <Link to="/" className="brand">
-            <span className="brand-mark" aria-hidden="true">
-              {businessName.charAt(0)}
-            </span>
-            <span className="brand-name">{businessName}</span>
-          </Link>
+          <BrandMark />
           <button
             type="button"
             className="menu-toggle button-ghost"

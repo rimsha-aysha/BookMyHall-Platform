@@ -8,6 +8,8 @@ import { reviewApi } from "../../api/reviewApi.js";
 import ImageCarousel from "../../components/ImageCarousel.jsx";
 import GalleryCard from "../../components/GalleryCard.jsx";
 import AvailabilityCalendar from "../../components/AvailabilityCalendar.jsx";
+import { usePublicSettings } from "../../hooks/usePublicSettings.js";
+import { bookingWindow } from "../../utils/bookingRules.js";
 import Icon from "../../components/Icon.jsx";
 import { EmptyState, ErrorState } from "../../components/States.jsx";
 import { formatRs, formatDate } from "../../utils/format.js";
@@ -23,6 +25,8 @@ const Stars = ({ value }) => (
 const HallDetailsPage = () => {
   const { id } = useParams();
   const { user } = useAuth();
+  // Only dates the restaurant accepts bookings for can be picked.
+  const { minDate, maxDate } = bookingWindow(usePublicSettings());
   const location = useLocation();
   const fetchHall = useCallback(() => hallsApi.getActiveById(id), [id]);
   const { data: hall, loading, error, reload } = useFetch(fetchHall);
@@ -103,7 +107,13 @@ const HallDetailsPage = () => {
                 </div>
                 {isCustomer && (
                   <>
-                    <AvailabilityCalendar hallId={hall._id} value={selectedDate} onChange={setSelectedDate} />
+                    <AvailabilityCalendar
+                      hallId={hall._id}
+                      value={selectedDate}
+                      onChange={setSelectedDate}
+                      minDate={minDate}
+                      maxDate={maxDate}
+                    />
                     {selectedDate && (
                       <div className="card-actions">
                         <Link to={bookLink} className="button-link button-primary">

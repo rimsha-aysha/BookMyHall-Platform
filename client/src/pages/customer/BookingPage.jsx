@@ -8,14 +8,28 @@ import AvailabilityCalendar from "../../components/AvailabilityCalendar.jsx";
 import PageHeader from "../../components/PageHeader.jsx";
 import Icon from "../../components/Icon.jsx";
 import { SelectableItemList, Section } from "../../components/BookingFormParts.jsx";
-import { EVENT_TYPES, toggleId } from "../../utils/booking.js";
+import { toggleId } from "../../utils/booking.js";
+import { bookingWindow, dateProblem, eventTypeOptions, hasOpeningHours, openingHoursProblem } from "../../utils/bookingRules.js";
 import { LoadingState, ErrorState } from "../../components/States.jsx";
 import { usePublicSettings } from "../../hooks/usePublicSettings.js";
-import { resolveImageUrl, formatRs, formatDate, formatTimeRange, todayInputValue, apiError } from "../../utils/format.js";
+import {
+  resolveImageUrl,
+  formatRs,
+  formatDate,
+  formatTime,
+  formatTimeRange,
+  todayInputValue,
+  apiError,
+} from "../../utils/format.js";
 
 const BookingPage = () => {
   const [searchParams] = useSearchParams();
-  const { advancePaymentPercentage, policyNotes } = usePublicSettings();
+  const settings = usePublicSettings();
+  const { advancePaymentPercentage, policyNotes, cancellationPolicy } = settings;
+  // The restaurant's booking rules, mirrored from the server so customers
+  // only see choices it will accept (it re-checks everything on submit).
+  const eventTypes = eventTypeOptions(settings);
+  const { minDate, maxDate } = bookingWindow(settings);
   const { data: halls, loading: hallsLoading, error: hallsError } = useFetch(hallsApi.listActive);
   const { data: packages, loading: packagesLoading, error: packagesError } = useFetch(packagesApi.listActive);
   const { data: foods, loading: foodsLoading, error: foodsError } = useFetch(foodsApi.listActive);
@@ -30,9 +44,12 @@ const BookingPage = () => {
   const initialDate = searchParams.get("date") || "";
   const [form, setForm] = useState(() => ({
     hall: searchParams.get("hall") || "",
-    eventType: !initialEventType || EVENT_TYPES.includes(initialEventType) ? initialEventType : "Other",
-    customEventType: initialEventType && !EVENT_TYPES.includes(initialEventType) ? initialEventType : "",
-    eventDate: /^\d{4}-\d{2}-\d{2}$/.test(initialDate) && initialDate >= todayInputValue() ? initialDate : "",
+    eventType: !initialEventType || eventTypes.includes(initialEventType) ? initialEventType : "Other",
+    customEventType: initialEventType && !eventTypes.includes(initialEventType) ? initialEventType : "",
+    eventDate:
+      /^\d{4}-\d{2}-\d{2}$/.test(initialDate) && initialDate >= todayInputValue() && !dateProblem(settings, initialDate)
+        ? initialDate
+        : "",
     startTime: "",
     endTime: "",
     guestCount: "",
@@ -133,12 +150,20 @@ const BookingPage = () => {
   const guestCountExceedsCapacity =
     selectedHall && form.guestCount && Number(form.guestCount) > selectedHall.capacity;
 
-  const eventType = form.eventType === "Other" ? form.customEventType.trim() : form.eventType;
+  // Only a choice the restaurant offers counts ("Other" only while it does).
+  const eventType = !eventTypes.includes(form.eventType)
+    ? ""
+    : form.eventType === "Other"
+      ? form.customEventType.trim()
+      : form.eventType;
+  const hoursProblem = openingHoursProblem(settings, form.startTime, form.endTime);
+  const eventDateProblem = dateProblem(settings, form.eventDate);
 
   const blockers = [];
   if (!eventType) blockers.push("choose an event type");
-  if (!form.eventDate) blockers.push("pick an available date on the calendar");
+  if (!form.eventDate || eventDateProblem) blockers.push("pick an available date on the calendar");
   if (!timesValid) blockers.push("set a valid start and end time");
+  if (hoursProblem) blockers.push("choose times within opening hours");
   if (!form.guestCount) blockers.push("enter the guest count");
   if (!form.hall) blockers.push("select a hall");
   if (guestCountExceedsCapacity) blockers.push("reduce guests or pick a larger hall");
@@ -266,7 +291,7 @@ const BookingPage = () => {
                   <label htmlFor="eventType">Event Type</label>
                   <select id="eventType" name="eventType" value={form.eventType} onChange={handleChange} required>
                     <option value="">Select event type</option>
-                    {EVENT_TYPES.map((type) => (
+                    {eventTypes.map((type) => (
                       <option key={type} value={type}>
                         {type}
                       </option>
@@ -383,21 +408,48 @@ const BookingPage = () => {
                   value={form.eventDate}
                   onChange={selectDate}
                   refreshKey={calendarRefresh}
+                  minDate={minDate}
+                  maxDate={maxDate}
                 />
               )}
+              {eventDateProblem && <p role="alert">{eventDateProblem}</p>}
               <div className="form-row">
                 <div>
                   <label htmlFor="startTime">Start Time</label>
-                  <input id="startTime" name="startTime" type="time" value={form.startTime} onChange={handleChange} required />
+                  <input
+                    id="startTime"
+                    name="startTime"
+                    type="time"
+                    value={form.startTime}
+                    onChange={handleChange}
+                    min={settings.openingTime || undefined}
+                    max={settings.closingTime || undefined}
+                    required
+                  />
                 </div>
                 <div>
                   <label htmlFor="endTime">End Time</label>
-                  <input id="endTime" name="endTime" type="time" value={form.endTime} onChange={handleChange} required />
+                  <input
+                    id="endTime"
+                    name="endTime"
+                    type="time"
+                    value={form.endTime}
+                    onChange={handleChange}
+                    min={settings.openingTime || undefined}
+                    max={settings.closingTime || undefined}
+                    required
+                  />
                 </div>
               </div>
+              {hasOpeningHours(settings) && !hoursProblem && (
+                <p className="muted small">
+                  Events run between {formatTime(settings.openingTime)} and {formatTime(settings.closingTime)}.
+                </p>
+              )}
               {form.startTime && form.endTime && !timesValid && (
                 <p role="alert">End time must be after start time.</p>
               )}
+              {timesValid && hoursProblem && <p role="alert">{hoursProblem}</p>}
             </Section>
 
             <Section number="5" title="Package" subtitle="Optional bundle of hall time, décor and services.">
@@ -556,6 +608,12 @@ const BookingPage = () => {
                 <details className="small">
                   <summary>Booking policies</summary>
                   <p className="muted mt-8 pre-line">{policyNotes}</p>
+                </details>
+              )}
+              {cancellationPolicy && (
+                <details className="small">
+                  <summary>Cancellation policy</summary>
+                  <p className="muted mt-8 pre-line">{cancellationPolicy}</p>
                 </details>
               )}
             </div>

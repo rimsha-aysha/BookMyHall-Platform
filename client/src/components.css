@@ -2286,6 +2286,7 @@ button.danger { color: var(--danger); }
 .calendar-day.tone-full:hover { border-color: var(--border); background: repeating-linear-gradient(135deg, var(--code-bg) 0 4px, transparent 4px 8px); }
 
 .calendar-day.tone-past,
+.calendar-day.tone-outside,
 .calendar-day.tone-loading { color: color-mix(in srgb, var(--text) 60%, transparent); }
 .calendar-day:disabled,
 .calendar-day[aria-disabled="true"] { cursor: not-allowed; opacity: 1; }
@@ -2668,3 +2669,35 @@ ul.chips { list-style: none; padding: 0; }
   border-top: 1px solid var(--border);
 }
 .settings-actions p { margin: 0; }
+
+/* ---- Restaurant branding ---- */
+
+.brand-logo {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+.brand-name.is-loading { display: inline-block; min-width: 8ch; }
+
+.about-band {
+  display: grid;
+  gap: 8px 32px;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.about-band p { margin: 0; }
+.about-facts { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 8px 0 0; padding: 0; list-style: none; font-size: 0.9rem; }
+.about-facts li { display: inline-flex; gap: 6px; align-items: center; }
+
+.override-box {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px dashed var(--accent-border);
+  border-radius: var(--radius-sm);
+  background: var(--accent-bg);
+}
+.override-box .field-help { margin-bottom: 0; }
