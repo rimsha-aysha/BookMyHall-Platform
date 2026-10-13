@@ -1,11 +1,23 @@
 import mongoose from "mongoose";
+import { assertSafeMongoUri } from "./dbGuard.js";
 
 // MONGODB_URI is the connection string (MongoDB Atlas). MONGO_URI is the
 // older name, still accepted so an existing local .env keeps working.
-export const getMongoUri = () => process.env.MONGODB_URI || process.env.MONGO_URI;
+// Every URI handed out passes the production-database guard (dbGuard.js)
+// first, so the server and the scripts all refuse an unsafe target.
+export const getMongoUri = () => {
+  const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+  return uri ? assertSafeMongoUri(uri) : uri;
+};
 
 export const connectDB = async () => {
-  const uri = getMongoUri();
+  let uri;
+  try {
+    uri = getMongoUri();
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
   if (!uri) {
     console.error("MongoDB connection error: MONGODB_URI is not set in server/.env");
     process.exit(1);

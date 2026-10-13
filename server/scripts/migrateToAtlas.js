@@ -12,6 +12,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import mongoose from "mongoose";
+import { assertSafeMongoUri } from "../src/config/dbGuard.js";
 
 const { MongoClient } = mongoose.mongo;
 const { EJSON } = mongoose.mongo.BSON;
@@ -24,6 +25,7 @@ const canonical = (doc) => EJSON.stringify(doc, { relaxed: false });
 const run = async () => {
   if (!TARGET_URI) throw new Error("MONGODB_URI (the Atlas connection string) is not set in server/.env");
   if (/localhost|127\.0\.0\.1/i.test(TARGET_URI)) throw new Error("MONGODB_URI still points at the local database");
+  assertSafeMongoUri(TARGET_URI);
 
   const source = new MongoClient(SOURCE_URI);
   const target = new MongoClient(TARGET_URI);
