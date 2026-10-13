@@ -7,3 +7,8 @@ node_modules/
 dist/
 server/uploads/
 *.log
+
+# Per-restaurant setup files (contact details etc.) stay out of Git; only the
+# placeholder example is committed. They never contain passwords.
+server/setup/*.json
+!server/setup/restaurant.example.json

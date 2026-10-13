@@ -10,8 +10,26 @@ export const isCloudinaryConfigured = () =>
     process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET
   );
 
-// Uploaded images go into this folder of the Cloudinary media library.
-export const getCloudinaryFolder = () => process.env.CLOUDINARY_FOLDER || "bookmyhall";
+// Uploaded images go into this folder of the Cloudinary media library. Each
+// installation (restaurant) sets its own, so restaurants that share a
+// Cloudinary account never mix their photos — there is deliberately no
+// default (see assertCloudinaryConfig).
+export const getCloudinaryFolder = () => process.env.CLOUDINARY_FOLDER?.trim() || "";
+
+// Called at server startup. Cloudinary is optional (without it, uploads are
+// stored on local disk), but a half-finished configuration is refused rather
+// than silently falling back.
+export const assertCloudinaryConfig = () => {
+  const keys = ["CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET"];
+  const set = keys.filter((key) => process.env[key]);
+  if (set.length === 0) return;
+  if (set.length < keys.length) {
+    throw new Error(`Cloudinary is partly configured: also set ${keys.filter((k) => !set.includes(k)).join(", ")} in server/.env`);
+  }
+  if (!getCloudinaryFolder()) {
+    throw new Error("CLOUDINARY_FOLDER must be set in server/.env — a folder for this restaurant's uploads");
+  }
+};
 
 let configured = false;
 export const getCloudinary = () => {

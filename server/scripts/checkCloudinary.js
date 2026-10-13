@@ -4,7 +4,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { isCloudinaryConfigured, getCloudinary, getCloudinaryFolder } from "../src/config/cloudinary.js";
+import { isCloudinaryConfigured, assertCloudinaryConfig, getCloudinary, getCloudinaryFolder } from "../src/config/cloudinary.js";
 
 const run = async () => {
   if (!isCloudinaryConfigured()) {
@@ -12,6 +12,7 @@ const run = async () => {
       "CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET must all be set in server/.env"
     );
   }
+  assertCloudinaryConfig(); // CLOUDINARY_FOLDER is required too
   const cloudinary = getCloudinary();
 
   const ping = await cloudinary.api.ping();

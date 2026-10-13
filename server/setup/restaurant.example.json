@@ -1,0 +1,76 @@
+{
+  "_readme": "Copy this file (e.g. to setup/my-restaurant.json — files in setup/ other than this example are git-ignored), replace every value, then run: npm run setup:restaurant -- --config setup/my-restaurant.json --dry-run. Never put passwords or keys in this file: the Owner's password is asked for when the setup runs. Logo and photos can be added afterwards from the admin panel (or given here as https:// image URLs). Keys starting with _ are notes and are ignored.",
+
+  "restaurant": {
+    "businessName": "Your Restaurant Name",
+    "tagline": "Celebrations made easy",
+    "description": "A short paragraph about the restaurant and its event halls, shown on the home page.",
+    "logoUrl": "",
+    "coverImages": [],
+    "brandColor": "#8c5d2a",
+
+    "contactEmail": "events@example.com",
+    "contactPhone": "+91 00000 00000",
+    "whatsapp": "",
+    "address": "Street, Area, City, State PIN",
+    "mapUrl": "",
+
+    "policyNotes": "Outside catering is not permitted. Decorations must be removed by closing time.",
+    "cancellationPolicy": "The advance is refundable up to 30 days before the event.",
+    "advancePaymentPercentage": 50,
+
+    "_rules": "eventTypes: keep \"Other\" to let customers describe their own event. openingTime/closingTime: both \"HH:mm\", or both \"\" for any time. minNoticeDays: 0 allows same-day bookings. maxAdvanceDays: null for no limit.",
+    "eventTypes": ["Wedding", "Reception", "Engagement", "Birthday", "Anniversary", "Corporate Event", "Other"],
+    "openingTime": "10:00",
+    "closingTime": "23:00",
+    "minNoticeDays": 2,
+    "maxAdvanceDays": 365
+  },
+
+  "owner": {
+    "_note": "The restaurant owner's login. The password is NOT stored here.",
+    "name": "Owner Name",
+    "email": "owner@example.com"
+  },
+
+  "catalog": {
+    "_note": "Optional starting items; the restaurant can edit or replace them from the admin panel. Each type is only added if the database has none yet.",
+    "halls": [
+      {
+        "name": "Main Banquet Hall",
+        "description": "Our largest hall, with a stage and dance floor.",
+        "capacity": 300,
+        "price": 50000,
+        "amenities": ["Air Conditioning", "Stage", "Parking", "Bridal Room"],
+        "images": []
+      },
+      {
+        "name": "Garden Terrace",
+        "description": "Open-air seating for smaller gatherings.",
+        "capacity": 80,
+        "price": 15000,
+        "amenities": ["Outdoor", "Lighting"],
+        "images": []
+      }
+    ],
+    "packages": [
+      {
+        "name": "Classic Celebration",
+        "description": "Hall décor, welcome drinks and a standard buffet.",
+        "price": 40000,
+        "includedItems": ["Stage décor", "Welcome drinks", "Standard buffet"],
+        "images": []
+      }
+    ],
+    "foods": [
+      { "name": "Vegetarian Buffet (per 50 guests)", "category": "Buffet", "price": 25000, "images": [] },
+      { "name": "Non-vegetarian Buffet (per 50 guests)", "category": "Buffet", "price": 32000, "images": [] }
+    ],
+    "decorations": [
+      { "name": "Floral Stage", "category": "Stage", "price": 12000, "images": [] }
+    ],
+    "services": [
+      { "name": "Photography (4 hours)", "category": "Media", "price": 15000, "images": [] }
+    ]
+  }
+}
