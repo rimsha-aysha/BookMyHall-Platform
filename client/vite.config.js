@@ -12,8 +12,17 @@ const escapeHtml = (value) =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_')
+
+  // A production build must know this installation's API address; without it
+  // the site would silently call http://localhost:5000 and never work online.
+  if (command === 'build' && mode === 'production' && !/^https?:\/\/\S+\/api\/?$/.test(env.VITE_API_URL?.trim() || '')) {
+    throw new Error(
+      'VITE_API_URL must be set for a production build to this installation\'s API, ending in /api ' +
+        '(e.g. https://spice-garden-api.onrender.com/api).'
+    )
+  }
   const title = escapeHtml(env.VITE_SITE_TITLE?.trim() || DEFAULT_TITLE)
   const description = escapeHtml(env.VITE_SITE_DESCRIPTION?.trim() || DEFAULT_DESCRIPTION)
 

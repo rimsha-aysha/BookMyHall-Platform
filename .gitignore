@@ -12,3 +12,5 @@ server/uploads/
 # placeholder example is committed. They never contain passwords.
 server/setup/*.json
 !server/setup/restaurant.example.json
+# Per-restaurant environment files used with --env-file (contain credentials).
+server/setup/*.env

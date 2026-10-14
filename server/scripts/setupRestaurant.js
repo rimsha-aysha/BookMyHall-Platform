@@ -1,16 +1,20 @@
 // Configures a new installation for its restaurant from a JSON file:
 // restaurant settings, the Owner account and an optional starting catalog.
 // See INSTALL.md and setup/restaurant.example.json. Run from the server/
-// folder, with server/.env pointing at THIS restaurant's own database:
+// folder, pointing at THIS restaurant's own database — best with the
+// restaurant's own (git-ignored) environment file:
 //
-//   npm run setup:restaurant -- --config setup/my-restaurant.json --dry-run
-//   npm run setup:restaurant -- --config setup/my-restaurant.json
+//   node --env-file=setup/spice-garden.env scripts/setupRestaurant.js --config setup/spice-garden.json --dry-run
+//   node --env-file=setup/spice-garden.env scripts/setupRestaurant.js --config setup/spice-garden.json
+//
+// (or `npm run setup:restaurant -- --config …` to use server/.env)
 //
 // Options:
 //   --config <file>  the restaurant's setup file (required)
 //   --dry-run        validate and show what would happen; write nothing
 //   --force          allow re-running on an installation that is already set
 //                    up or has bookings (existing Owner password is kept)
+//   --yes            skip typing the database name to confirm (non-interactive)
 //
 // The Owner's password is never read from the file. It is asked for (hidden)
 // when a new Owner account is created, or taken from the OWNER_PASSWORD
@@ -20,20 +24,23 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import fs from "fs";
+import readline from "readline";
 import mongoose from "mongoose";
 import { getMongoUri } from "../src/config/db.js";
+import { parseMongoUri } from "../src/config/dbGuard.js";
 import { runSetup, SetupError, MIN_OWNER_PASSWORD_LENGTH } from "../src/services/restaurantSetup.js";
 
 const parseArgs = (argv) => {
-  const args = { force: false, dryRun: false, config: "" };
+  const args = { force: false, dryRun: false, yes: false, config: "" };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--force") args.force = true;
     else if (arg === "--dry-run") args.dryRun = true;
+    else if (arg === "--yes") args.yes = true;
     else if (arg === "--config") args.config = argv[(i += 1)] || "";
     else throw new SetupError(`Unknown option "${arg}"`);
   }
-  if (!args.config) throw new SetupError("Usage: npm run setup:restaurant -- --config <file> [--dry-run] [--force]");
+  if (!args.config) throw new SetupError("Usage: npm run setup:restaurant -- --config <file> [--dry-run] [--force] [--yes]");
   return args;
 };
 
@@ -77,6 +84,20 @@ const askOwnerPassword = async () => {
   return first;
 };
 
+// Each restaurant has its own database, so before writing anything the
+// operator confirms this is the intended one by typing its name. --yes skips
+// the question (required when not running in a terminal).
+const confirmTarget = async (dbName, yes) => {
+  if (yes) return;
+  if (!process.stdin.isTTY) {
+    throw new SetupError(`Not running in a terminal: re-run with --yes to confirm writing to database "${dbName}".`);
+  }
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const answer = await new Promise((resolve) => rl.question(`\nType the database name to confirm writing to it (${dbName}): `, resolve));
+  rl.close();
+  if (answer.trim() !== dbName) throw new SetupError("The name did not match. Nothing was changed.");
+};
+
 const readConfig = (file) => {
   let text;
   try {
@@ -96,9 +117,16 @@ const run = async () => {
   const config = readConfig(args.config);
 
   const uri = getMongoUri(); // passes the production-database safety guard
-  if (!uri) throw new SetupError("MONGODB_URI is not set in server/.env");
+  if (!uri) throw new SetupError("MONGODB_URI is not set (server/.env or --env-file)");
   await mongoose.connect(uri);
-  console.log(`Database: "${mongoose.connection.name}"${args.dryRun ? " (dry run — nothing will be written)" : ""}`);
+  const dbName = mongoose.connection.name;
+  // Host names only — never the connection string (it contains the password).
+  console.log(`Database: "${dbName}" on ${parseMongoUri(uri).hosts.join(", ")}`);
+  if (args.dryRun) {
+    console.log("(dry run — nothing will be written)");
+  } else {
+    await confirmTarget(dbName, args.yes);
+  }
 
   const result = await runSetup({ config, force: args.force, dryRun: args.dryRun, getOwnerPassword: askOwnerPassword });
 

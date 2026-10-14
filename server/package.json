@@ -4,6 +4,9 @@
   "description": "BookMyHall Platform backend REST API (Node.js + Express + MongoDB)",
   "main": "server.js",
   "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",

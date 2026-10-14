@@ -21,10 +21,36 @@ import galleryRoutes from "./routes/gallery.routes.js";
 import suggestionRoutes from "./routes/suggestion.routes.js";
 import uploadRoutes, { UPLOAD_DIR } from "./routes/upload.routes.js";
 import { notFound, errorHandler } from "./middleware/errorHandler.js";
+import { isProduction, parseClientOrigins } from "./config/env.js";
 
 const app = express();
 
-app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }));
+// Render (and similar hosts) put one proxy in front of the app; trusting it
+// gives req.ip the visitor's address, which the login rate limit relies on.
+app.set("trust proxy", 1);
+app.disable("x-powered-by");
+
+// Basic security headers for every API response.
+app.use((req, res, next) => {
+  res.set({
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+  });
+  next();
+});
+
+// Only this installation's own website may call its API. CLIENT_URL may list
+// several addresses (comma-separated, e.g. with and without "www."). Read per
+// request, so it is always the value from the environment / server/.env.
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      const allowed = parseClientOrigins();
+      callback(null, allowed.length ? allowed.includes(origin) : origin === "http://localhost:5173");
+    },
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -34,7 +60,8 @@ if (process.env.NODE_ENV !== "production") {
 
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/test", testRoutes);
+// Development-only checks of authentication; not available in production.
+app.use("/api/test", (req, res, next) => (isProduction() ? notFound(req, res, next) : next()), testRoutes);
 app.use("/api/halls", hallRoutes);
 app.use("/api/packages", packageRoutes);
 app.use("/api/foods", foodRoutes);

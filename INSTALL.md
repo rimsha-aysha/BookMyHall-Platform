@@ -40,24 +40,34 @@ See `server/.env.example`.
 
 | Variable | Value |
 |---|---|
-| `NODE_ENV` | `production` |
+| `NODE_ENV` | **`production`** (required on Render — the server refuses to start there without it). |
 | `MONGODB_URI` | This restaurant's connection string, **including the database name** (`…mongodb.net/bookmyhall_spice_garden?…`). |
 | `MONGODB_DB_NAME` | The same database name. The server refuses to start if it doesn't match the URI. |
 | `MONGODB_BLOCKED_HOSTS` | Optional, comma-separated hosts this installation must never use (e.g. other installations' clusters). Keep real hosts out of Git. |
-| `JWT_SECRET` | This installation's own secret. |
+| `JWT_SECRET` | This installation's own random secret, **at least 32 characters** (`node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`). Never reuse it for another restaurant. |
 | `JWT_EXPIRES_IN` | e.g. `7d` |
-| `CLIENT_URL` | The frontend's URL, e.g. `https://spice-garden-halls.vercel.app` (CORS). |
-| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Cloudinary credentials (all three, or none). |
-| `CLOUDINARY_FOLDER` | **Required with Cloudinary**: this restaurant's own folder, e.g. `bookmyhall-platform/spice-garden`. |
-| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | Razorpay **test** keys. The secret never leaves the server. |
+| `CLIENT_URL` | This restaurant's website address(es), **https://, no path**. Several are comma-separated, e.g. `https://spicegarden.in,https://www.spicegarden.in` (or the Vercel address). Only these may call the API. |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Cloudinary credentials. **Required in production** — photos saved on Render's own disk would be lost on every deploy. |
+| `CLOUDINARY_FOLDER` | This restaurant's own folder, e.g. `bookmyhall-platform/spice-garden`. |
+| `ALLOW_LOCAL_UPLOADS` | Leave unset. Only `true` on a host with a **persistent disk**, to store photos there instead of Cloudinary. |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | Razorpay **test** keys (`rzp_test_…`; live keys are refused in this release). Optional — without them, online payment is switched off and offline payments still work. The secret never leaves the server. |
+
+In production the server **refuses to start** — listing every problem — if
+`JWT_SECRET`, `CLIENT_URL`, the database settings or Cloudinary are missing or
+unsafe. It also hides internal error details from visitors, limits repeated
+login/sign-up attempts, sends basic security headers, and turns off the
+development-only `/api/test` routes.
 
 The **database safety guard** checks every connection (server and scripts):
 the URI must name its database, that name must equal `MONGODB_DB_NAME`, it
 may not be the original project's database (`bookmyhall`), and its host may
 not be listed in `MONGODB_BLOCKED_HOSTS`.
 
-Render: root directory `server`, build command `npm ci`, start command
-`npm start`.
+Render (one web service per restaurant): root directory `server`, build
+command `npm ci`, start command `npm start`, health check path `/api/health`.
+Node.js 20.19 or newer is required (pinned in `package.json` → `engines`).
+Atlas: allow Render's outbound IP addresses (or `0.0.0.0/0` with a strong
+database password) in Network Access.
 
 ## 3. Frontend environment variables (`client/`)
 
@@ -66,17 +76,25 @@ a secret in a `VITE_` variable.
 
 | Variable | Value |
 |---|---|
-| `VITE_API_URL` | The backend URL plus `/api`, e.g. `https://spice-garden-api.onrender.com/api` |
+| `VITE_API_URL` | **Required.** The backend URL plus `/api`, e.g. `https://spice-garden-api.onrender.com/api`. A production build fails without it (instead of silently calling `localhost`). |
 | `VITE_SITE_TITLE` | Optional: the restaurant's name, used for the browser tab and link previews before the app loads. |
 | `VITE_SITE_DESCRIPTION` | Optional: a one-line summary for link previews. |
 
-Vercel: root directory `client`, framework Vite (build `npm run build`, output
-`dist`). `client/vercel.json` already routes every path to the app.
+Vercel (one project per restaurant): root directory `client`, framework Vite
+(build `npm run build`, output `dist`). `client/vercel.json` already routes
+every path to the app and adds basic security headers. Add the site's final
+address(es) to the backend's `CLIENT_URL`.
 
 ## 4. Configure the restaurant (one time)
 
-Run this from your own computer, with `server/.env` pointing at **this
-restaurant's** database.
+Run this from your own computer, pointed at **this restaurant's** database.
+The safest way when you look after several restaurants is one environment
+file per restaurant, e.g. `server/setup/spice-garden.env` (files ending in
+`.env` in `server/setup/` are git-ignored), containing at least that
+restaurant's `MONGODB_URI` and `MONGODB_DB_NAME`, and passing it with
+`node --env-file=…` as shown below. Before writing anything, the script shows
+the target database and asks you to **type its name to confirm** (`--yes`
+skips this for non-interactive use).
 
 1. Copy `server/setup/restaurant.example.json` to e.g.
    `server/setup/spice-garden.json` (files in `server/setup/` other than the
@@ -93,12 +111,15 @@ restaurant's** database.
 2. Check it without changing anything:
    ```bash
    cd server
-   npm run setup:restaurant -- --config setup/spice-garden.json --dry-run
+   node --env-file=setup/spice-garden.env scripts/setupRestaurant.js --config setup/spice-garden.json --dry-run
    ```
 3. Apply it:
    ```bash
-   npm run setup:restaurant -- --config setup/spice-garden.json
+   node --env-file=setup/spice-garden.env scripts/setupRestaurant.js --config setup/spice-garden.json
    ```
+   (With `server/.env` instead: `npm run setup:restaurant -- --config setup/spice-garden.json`.)
+   For demo past events on a demo installation, `npm run seed:gallery` can be
+   run afterwards (demo/test/dev database names only, unless `--any-db`).
    You are asked (twice, hidden) for the new Owner's password — at least 10
    characters. Give it to the Owner securely; they can log in straight away.
    For non-interactive use, `OWNER_PASSWORD` may be set for that one command

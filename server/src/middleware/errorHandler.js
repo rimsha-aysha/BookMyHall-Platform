@@ -32,9 +32,19 @@ export const errorHandler = (err, req, res, next) => {
     message = `${field} already exists`;
   }
 
+  const production = process.env.NODE_ENV === "production";
+
+  // Unexpected server errors: logged for the operator; in production the
+  // visitor gets a generic message instead of internal details. 4xx messages
+  // are written for users and shown as before.
+  if (statusCode >= 500) {
+    console.error(err);
+    if (production) message = "Something went wrong. Please try again.";
+  }
+
   res.status(statusCode).json({
     success: false,
     message,
-    stack: process.env.NODE_ENV === "production" ? undefined : err.stack,
+    stack: production ? undefined : err.stack,
   });
 };
